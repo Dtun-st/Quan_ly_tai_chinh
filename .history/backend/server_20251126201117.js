@@ -13,12 +13,13 @@ const profileRoute = require('./routes/profile');
 const homeRoute = require('./routes/home');
 const notificationRoute = require('./routes/notification');
 const historyRoute = require('./routes/history');
+const changePassword = require('./routes/change_password');
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-app.use('/api/password', require('./routes/change_password'));
+app.use('/api', changePassword);
 app.use('/api/register', registerRoute);
 app.use('/api/login', loginRoute);
 app.use('/api/bank', bankRoute);

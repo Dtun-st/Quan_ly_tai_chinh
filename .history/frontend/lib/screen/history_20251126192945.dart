@@ -3,11 +3,11 @@ import '../services/history_service.dart';
 
 const Color primaryColor = Color(0xFFFF6D00);
 const Color textColor = Color(0xFF333333);
-
 class HistoryScreen extends StatefulWidget {
+  final Function(Map<String, dynamic>)? onEdit; // callback trả transaction
   final VoidCallback? onUpdate; // callback sau khi xóa
 
-  const HistoryScreen({super.key, this.onUpdate});
+  const HistoryScreen({super.key, this.onEdit, this.onUpdate});
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -42,8 +42,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
     double sum = 0;
     for (var g in list) {
       double amount = double.tryParse(g['so_tien'].toString()) ?? 0;
-      if (g['loai_gd'] == "Thu") sum += amount;
-      else sum -= amount;
+      if (g['loai_gd'] == "Thu") {
+        sum += amount;
+      } else {
+        sum -= amount;
+      }
     }
     return sum;
   }
@@ -95,6 +98,39 @@ class _HistoryScreenState extends State<HistoryScreen> {
     String str = amount.toStringAsFixed(0);
     RegExp reg = RegExp(r'\B(?=(\d{3})+(?!\d))');
     return str.replaceAllMapped(reg, (Match match) => ',');
+  }
+
+  void _showEditDialog(Map<String, dynamic> transaction) {
+    final controller = TextEditingController(
+      text: transaction['so_tien'].toString(),
+    );
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Sửa giao dịch"),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(labelText: "Số tiền"),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Hủy"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // 👇 Gọi callback trả transaction về màn hình cha
+              if (widget.onEdit != null) {
+                widget.onEdit!(transaction);
+              }
+              Navigator.pop(context);
+            },
+            child: const Text("Sửa"),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -155,6 +191,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                     style: TextStyle(
                                       color: color,
                                       fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  GestureDetector(
+                                    onTap: () => _showEditDialog(gd),
+                                    child: Icon(
+                                      Icons.edit,
+                                      color: Colors.blue.shade600,
                                     ),
                                   ),
                                   const SizedBox(width: 8),
