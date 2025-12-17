@@ -6,26 +6,27 @@ const bcrypt = require('bcrypt');
 router.post('/', async (req, res) => {
   const { email_or_phone, password } = req.body;
 
-  if (!email_or_phone || !password)
+  if (!email_or_phone || !password) {
     return res.status(400).json({ success: false, message: 'Thiếu thông tin' });
+  }
 
   try {
-    const [users] = await pool.execute(
+    const [rows] = await pool.execute(
       'SELECT * FROM nguoi_dung WHERE email=? OR so_dien_thoai=?',
       [email_or_phone, email_or_phone]
     );
 
-    if (users.length === 0)
-      return res.status(400).json({ success: false, message: 'Email/SDT hoặc mật khẩu không đúng' });
+    if (rows.length === 0) {
+      return res.status(400).json({ success: false, message: 'Sai tài khoản hoặc mật khẩu' });
+    }
 
-    const user = users[0];
-
-    // So sánh mật khẩu hash
+    const user = rows[0];
     const match = await bcrypt.compare(password, user.mat_khau);
-    if (!match)
-      return res.status(400).json({ success: false, message: 'Email/SDT hoặc mật khẩu không đúng' });
 
-    // Nếu muốn trả token JWT, tạo ở đây
+    if (!match) {
+      return res.status(400).json({ success: false, message: 'Sai tài khoản hoặc mật khẩu' });
+    }
+
     res.json({
       success: true,
       message: 'Đăng nhập thành công',
@@ -34,7 +35,7 @@ router.post('/', async (req, res) => {
         ho_ten: user.ho_ten,
         email: user.email,
         so_dien_thoai: user.so_dien_thoai,
-      },
+      }
     });
   } catch (err) {
     console.error(err);

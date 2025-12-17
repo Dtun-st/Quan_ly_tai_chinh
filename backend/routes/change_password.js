@@ -3,12 +3,22 @@ const router = express.Router();
 const pool = require('../db');
 const bcrypt = require('bcrypt');
 
-// Đổi mật khẩu
 router.post('/change', async (req, res) => {
   const { userId, oldPassword, newPassword } = req.body;
 
+  // ===== VALIDATE =====
   if (!userId || !oldPassword || !newPassword) {
-    return res.json({ success: false, message: "Thiếu dữ liệu" });
+    return res.json({
+      success: false,
+      message: "Vui lòng nhập đầy đủ thông tin"
+    });
+  }
+
+  if (newPassword.length < 6) {
+    return res.json({
+      success: false,
+      message: "Mật khẩu mới phải có ít nhất 6 ký tự"
+    });
   }
 
   try {
@@ -17,17 +27,21 @@ router.post('/change', async (req, res) => {
       [userId]
     );
 
-    if (rows.length === 0)
-      return res.json({ success: false, message: "Tài khoản không tồn tại" });
+    if (rows.length === 0) {
+      return res.json({
+        success: false,
+        message: "Tài khoản không tồn tại"
+      });
+    }
 
-    const hash = rows[0].mat_khau;
+    const isMatch = await bcrypt.compare(oldPassword, rows[0].mat_khau);
+    if (!isMatch) {
+      return res.json({
+        success: false,
+        message: "Mật khẩu cũ không chính xác"
+      });
+    }
 
-    // Kiểm tra mật khẩu cũ đúng không
-    const match = await bcrypt.compare(oldPassword, hash);
-    if (!match)
-      return res.json({ success: false, message: "Mật khẩu cũ không chính xác" });
-
-    // Hash mật khẩu mới
     const newHash = await bcrypt.hash(newPassword, 10);
 
     await pool.execute(
@@ -40,8 +54,11 @@ router.post('/change', async (req, res) => {
       message: "Đổi mật khẩu thành công"
     });
   } catch (err) {
-    console.log(err);
-    res.status(500).json({ success: false, message: "Lỗi server" });
+    console.error(err);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server"
+    });
   }
 });
 

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:frontend/screen/history.dart';
 import '../services/bank_service.dart';
 import '../services/transaction_service.dart';
 import 'category.dart';
@@ -54,7 +55,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
 
   Future<void> _loadAccounts() async {
     final bankService = BankService();
-    await bankService.loadAccounts(); 
+    await bankService.loadAccounts();
     setState(() {
       accounts = bankService.accounts
           .map(
@@ -166,7 +167,20 @@ class _TransactionScreenState extends State<TransactionScreen> {
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: primaryColor,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history_rounded, color: Colors.white),
+            tooltip: "Lịch sử giao dịch",
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const HistoryScreen()),
+              );
+            },
+          ),
+        ],
       ),
+
       floatingActionButton: FloatingActionButton(
         onPressed: _saveTransaction,
         backgroundColor: primaryColor,
